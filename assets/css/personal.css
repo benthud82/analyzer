@@ -1,0 +1,9 @@
+.hovercoloer:hover {
+    background-color: #dfdddd;
+    cursor: pointer;
+}
+
+
+div.weather-category.twt-category > ul > li:last-child {
+      border: none;
+}
