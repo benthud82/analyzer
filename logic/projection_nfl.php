@@ -42,19 +42,19 @@ $array_livenfl = $sql_livenfl->fetchAll(pdo::FETCH_ASSOC);
 
 //loop through each live game
 foreach ($array_livenfl as $key => $value) {
-    $nfl_homeabb = $array_livenfl[$key]['nfl_homeabb'];
-    $nfl_hs = $array_livenfl[$key]['nfl_hs'];
-    $nfl_awayabb = $array_livenfl[$key]['nfl_awayabb'];
-    $nfl_vs = $array_livenfl[$key]['nfl_vs'];
-    $nfllines_fav = $array_livenfl[$key]['nfllines_fav'];
-    $nfllines_underdog = $array_livenfl[$key]['nfllines_underdog'];
-    $nfllines_spread = $array_livenfl[$key]['nfllines_spread'];
-    $nfllines_ou = $array_livenfl[$key]['nfllines_ou'];
-    $score_favorite = $array_livenfl[$key]['score_favorite'];
-    $score_underdog = $array_livenfl[$key]['score_underdog'];
-    $nfl_quarter = $array_livenfl[$key]['nfl_quarter'];
-    $nfl_timerem = $array_livenfl[$key]['nfl_timerem'];
-    $nfl_id = $array_livenfl[$key]['nfl_id'];
+    $nfl_homeabb = $array_livenfl[$key]['nfl_homeabb']; //home team abbreviation
+    $nfl_hs = $array_livenfl[$key]['nfl_hs']; //current home team score
+    $nfl_awayabb = $array_livenfl[$key]['nfl_awayabb']; //away team abbreviation
+    $nfl_vs = $array_livenfl[$key]['nfl_vs']; //current away team score
+    $nfllines_fav = $array_livenfl[$key]['nfllines_fav']; //team abbreviation of favorite
+    $nfllines_underdog = $array_livenfl[$key]['nfllines_underdog']; //team abbreviation of underdog
+    $nfllines_spread = $array_livenfl[$key]['nfllines_spread']; //point spread
+    $nfllines_ou = $array_livenfl[$key]['nfllines_ou']; //over/under spread
+    $score_favorite = $array_livenfl[$key]['score_favorite'];  //favorite projected score based off spread
+    $score_underdog = $array_livenfl[$key]['score_underdog']; //underdog projected score based off spread
+    $nfl_quarter = $array_livenfl[$key]['nfl_quarter']; //current quarter
+    $nfl_timerem = $array_livenfl[$key]['nfl_timerem']; //current time rem
+    $nfl_id = $array_livenfl[$key]['nfl_id'];  //game id
 
 
 
@@ -82,7 +82,7 @@ foreach ($array_livenfl as $key => $value) {
         $projscore_live_underdog = intval(($percent_as_spread * $score_underdog) + $nfl_vs);
     }
 
-    //Projected Spread Cover
+    //Projected Spread Cover    
     $favorite_scoredif = $projscore_live_favorite - $projscore_live_underdog;
     if ($favorite_scoredif > $nfllines_spread) {
         $projected_spread_text = 'The favorite ' . $nfllines_fav . ' is expected to cover.';

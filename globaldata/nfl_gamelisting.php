@@ -1,9 +1,10 @@
 <?php
 include_once '../globalincludes/connection.php';
+include_once '../logic/functions.php';
 
 $var_week = $_POST['nfl_week'];
-
-
+$net_winloss = 0;
+$gamelength = 60;
 $sql_nflgames = $conn1->prepare("SELECT 
                                 t1.nfl_id,
                                 t1.nfl_quarter,
@@ -33,19 +34,29 @@ $sql_nflgames = $conn1->prepare("SELECT
                                     WHERE
                                         t1.nfl_id = t2.nfl_id)
                                     AND nfl_week = $var_week
+                               --         and nfl_id = 58020
                             ORDER BY nfl_date, nfl_gametime ");
 $sql_nflgames->execute();
 $array_nflgames = $sql_nflgames->fetchAll(pdo::FETCH_ASSOC);
 
 foreach ($array_nflgames as $key => $value) {
-    $gameid = $array_nflgames[$key]['nfl_id'];
-    nfl_quarter = $array_nflgames[$key]['nfl_quarter'];
-    nfl_timerem = $array_nflgames[$key]['nfl_timerem'];
-    nfl_hs = $array_nflgames[$key]['nfl_hs'];
-    nfl_vs = $array_nflgames[$key]['nfl_vs'];
-    $gameid = $array_nflgames[$key]['nfl_id'];
-    $gameid = $array_nflgames[$key]['nfl_id'];
-    $gameid = $array_nflgames[$key]['nfl_id'];
+    $gameid = $array_nflgames[$key]['nfl_id'];  //unique game ID
+    $nfl_quarter = $array_nflgames[$key]['nfl_quarter']; //current quarter of game
+    $nfl_timerem = $array_nflgames[$key]['nfl_timerem']; //time remaining in quarter
+    $nfl_hs = $array_nflgames[$key]['nfl_hs'];  //actual home team score
+    $nfl_vs = $array_nflgames[$key]['nfl_vs']; //actual visitor team score
+    $nfllines_fav = $array_nflgames[$key]['nfllines_fav']; //abbreviation of favored team
+    $nfllines_underdog = $array_nflgames[$key]['nfllines_underdog'];  //abbreviation of underdog team
+    $nfllines_spread = $array_nflgames[$key]['nfllines_spread'];  //score spread of game
+    $nfl_homeabb = $array_nflgames[$key]['nfl_homeabb'];  //home team
+    $nfl_awayabb = $array_nflgames[$key]['nfl_awayabb'];  //away team
+    $score_favorite = $array_nflgames[$key]['score_favorite'];  //spread projected score favorite
+    $score_underdog = $array_nflgames[$key]['score_underdog'];  //spread projected score underdog
+    $nfllines_ou = $array_nflgames[$key]['nfllines_ou'];  //spread over under
+    //projected score
+    $proj_array = _nfl_projscore($nfl_homeabb, $nfl_hs, $nfl_awayabb, $nfl_vs, $nfllines_fav, $nfllines_underdog, $nfllines_spread, $nfllines_ou, $score_favorite, $score_underdog, $nfl_quarter, $nfl_timerem, $gamelength);
+    $proj_score_home = $proj_array[0];
+    $proj_score_away = $proj_array[1];
     ?>
     <!--Display games for current week-->
     <!--<div class="clearfix visible-sm visible-lg"></div>-->
@@ -80,8 +91,30 @@ foreach ($array_nflgames as $key => $value) {
                                                 nflbet_id = $gameid");
         $sql_nflbets->execute();
         $array_nflbets = $sql_nflbets->fetchAll(pdo::FETCH_ASSOC);
-
         if (!empty($array_nflbets)) {
+            $nflbet_type = $array_nflbets[0]['nflbet_type'];
+            $nflbet_for = $array_nflbets[0]['nflbet_for'];
+            $nflbet_spread = $array_nflbets[0]['nflbet_spread'];
+            $nflbet_amount = $array_nflbets[0]['nflbet_amount'];
+            $nflbet_win = $array_nflbets[0]['nflbet_win'];
+
+
+            switch ($nflbet_type) {
+                case 'SPREAD':
+                    $bet_return_result = _nfl_spread_live_result($nflbet_for, $nflbet_spread, $nflbet_amount, $nflbet_win, $proj_score_home, $proj_score_away, $nfl_homeabb, $nfl_awayabb, $nfllines_fav,$nfllines_underdog);
+                    $bet_winloss = $bet_return_result[0];
+                    $bet_winloss_amt = $bet_return_result[1];
+                    $net_winloss += $bet_winloss_amt;
+                    break;
+                case 'O/U':
+                    $bet_return_result = _nfl_ou_live_result($nflbet_for, $nflbet_spread, $nflbet_amount, $nflbet_win, $proj_score_home, $proj_score_away);
+                    $bet_winloss = $bet_return_result[0];
+                    $bet_winloss_amt = $bet_return_result[1];
+                    $net_winloss += $bet_winloss_amt;
+                    break;
+            }
+
+
             foreach ($array_nflbets as $betkey => $value) {
                 ?>
                 <div class="weather-category twt-category">
@@ -104,29 +137,32 @@ foreach ($array_nflgames as $key => $value) {
                         </li>
                     </ul>
                 </div>
+                <div class="h2"><?php echo $bet_winloss . ' | ' . $bet_winloss_amt ?></div>
                 <?php
             }
         } else {
             ?>
-            <div class="col-lg-12">NO BETS</div>
+            <div class="weather-category twt-category">
+                <ul>
+                    <li class="active">
+                        <h5><?php echo 'NO BETS?'?> </h5>
+                    </li>
+
+                </ul>
+            </div>
+
         <?php }
         ?>
-
-
-            <?php
-            //projected score
-            $projscore_array = _nfl_projscore($nfl_quarter, $nfl_timerem, $nfl_awayabb, $nfllines_fav,$score_favorite, $score_underdog, $nfl_vs,$nfl_hs);
-            ?>
 
         <div class="alert-secondary">
             <div class="media">
 
                 <div class="media-body">
                     <div class="row" style="margin-left: 10px;">
-                        <div class="col-lg-6 h3"><?php echo $array_nflgames[$key]['nfl_awayabb'] ?></div><div class="h3 col-lg-3"style="margin-left: 40px;"><?php echo $array_nflgames[$key]['nfl_vs'] ?></div>
+                        <div class="col-lg-6 h3"><?php echo $array_nflgames[$key]['nfl_awayabb'] ?></div><div class="h3 col-lg-3"style="margin-left: 40px;"><?php echo $proj_array[1] ?></div>
                     </div>
                     <div class="row" style="margin-left: 10px;">
-                        <div class="col-lg-6 h3"><?php echo $array_nflgames[$key]['nfl_homeabb'] ?></div><div class="h3 col-lg-3"style="margin-left: 40px;"><?php echo $array_nflgames[$key]['nfl_hs'] ?></div>
+                        <div class="col-lg-6 h3"><?php echo $array_nflgames[$key]['nfl_homeabb'] ?></div><div class="h3 col-lg-3"style="margin-left: 40px;"><?php echo $proj_array[0] ?></div>
                     </div>
                 </div>
             </div>
@@ -146,3 +182,5 @@ foreach ($array_nflgames as $key => $value) {
 
     <?php
 }
+
+echo $net_winloss;

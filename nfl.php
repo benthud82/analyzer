@@ -23,7 +23,7 @@
                 <div id="ctn_nflgames">
                     <!--nfl game content will go here-->
                 </div>
-            </div>
+            </div>  
         </div>
 
         <div id="modal_nfladdbet" class="modal fade " role="dialog">   
@@ -39,7 +39,7 @@
 
 
         function getnflgames() {
-            var nfl_week = 8;
+            var nfl_week = 9;
             $.ajax({
                 data: {"nfl_week": nfl_week},
                 type: 'POST',
