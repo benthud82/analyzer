@@ -43,24 +43,29 @@ function _nfl_ou_live_result($nflbet_for, $nflbet_spread, $nflbet_amount, $nflbe
     } elseif ($projsocre_live_total < $nflbet_spread) {
         $proj_over_under = 'UNDER';
     } else {
+        $proj_color = ' ';
         $proj_over_under = 'TIE';
-        $array_bet_result = array('TIE', '0');
+        $array_bet_result = array('TIE', '0', $proj_color);
         return $array_bet_result;
     }
 
     //what was the bet?
     if (trim($nflbet_for) == trim($proj_over_under)) {
         //win!
-        $array_bet_result = array('WIN', $netwin);
+
+
+        $proj_color = 'bg-success';
+        $array_bet_result = array('WIN', $netwin, $proj_color);
     } else {
         //loss :(
-        $array_bet_result = array('LOSE', -$nflbet_amount);
+        $proj_color = 'bg-danger';
+        $array_bet_result = array('LOSE', -$nflbet_amount, $proj_color);
     }
     return $array_bet_result;
 }
 
 function _nfl_spread_live_result($nflbet_for, $nflbet_spread, $nflbet_amount, $nflbet_win, $proj_score_home, $proj_score_away, $nfl_homeabb, $nfl_awayabb, $nfllines_fav, $nfllines_underdog) {
-  $netwin = $nflbet_win - $nflbet_amount;
+    $netwin = $nflbet_win - $nflbet_amount;
     //who are you going for favorite or visitor??  1 for favorite
     if (trim($nflbet_for) == trim($nfllines_fav)) {
         $goingfor_fav = 1;
@@ -102,15 +107,18 @@ function _nfl_spread_live_result($nflbet_for, $nflbet_spread, $nflbet_amount, $n
     if ($nflbet_for == $projected_cover_team) {
         $proj_betresult = 'WIN';
         $proj_betreturn = $nflbet_win - $nflbet_amount;
-        $array_bet_result = array('WIN', $netwin);
+        $proj_color = 'bg-success';
+        $array_bet_result = array('WIN', $netwin, $proj_color);
     } elseif ($nflbet_for !== $projected_cover_team) {
         $proj_betresult = 'LOSE';
         $proj_betreturn = -$nflbet_amount;
-        $array_bet_result = array('LOSE', -$nflbet_amount);
+        $proj_color = 'bg-danger';
+        $array_bet_result = array('LOSE', -$nflbet_amount, $proj_color);
     } else {
         $proj_betresult = 'TIE';
         $proj_betreturn = 0;
-        $array_bet_result = array('TIE', '0');
+        $proj_color = ' ';
+        $array_bet_result = array('TIE', '0', $proj_color);
     }
     return $array_bet_result;
 }

@@ -26,8 +26,8 @@
             </div>  
         </div>
 
-        <div id="modal_nfladdbet" class="modal fade " role="dialog">   
-        </div>
+        <div id="modal_nfladdbet" class="modal fade " role="dialog"></div>
+        <div id="modal_nfladdline" class="modal fade " role="dialog"></div>
 
     </div>
 
@@ -39,7 +39,7 @@
 
 
         function getnflgames() {
-            var nfl_week = 9;
+            var nfl_week = 10;
             $.ajax({
                 data: {"nfl_week": nfl_week},
                 type: 'POST',
@@ -57,6 +57,20 @@
                 data: {"nfl_id": nfl_id}, 
                 type: 'POST',
                 url: 'modal/nfl_betmodal.php',
+                dataType: 'html',
+                success: function (ajaxresult) {
+                    $("#modal_nfladdbet").html(ajaxresult);
+                    $('#modal_nfladdbet').modal('toggle');
+                }
+            });
+        });
+
+        $(document).on("click touchstart", ".nfl_modifyline", function (e) {
+            var nfl_id = $(this).attr('data-id');
+            $.ajax({
+                data: {"nfl_id": nfl_id}, 
+                type: 'POST',
+                url: 'modal/nfl_linemodal.php',
                 dataType: 'html',
                 success: function (ajaxresult) {
                     $("#modal_nfladdbet").html(ajaxresult);

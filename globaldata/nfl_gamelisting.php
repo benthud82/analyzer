@@ -92,30 +92,30 @@ foreach ($array_nflgames as $key => $value) {
         $sql_nflbets->execute();
         $array_nflbets = $sql_nflbets->fetchAll(pdo::FETCH_ASSOC);
         if (!empty($array_nflbets)) {
-            $nflbet_type = $array_nflbets[0]['nflbet_type'];
-            $nflbet_for = $array_nflbets[0]['nflbet_for'];
-            $nflbet_spread = $array_nflbets[0]['nflbet_spread'];
-            $nflbet_amount = $array_nflbets[0]['nflbet_amount'];
-            $nflbet_win = $array_nflbets[0]['nflbet_win'];
-
-
-            switch ($nflbet_type) {
-                case 'SPREAD':
-                    $bet_return_result = _nfl_spread_live_result($nflbet_for, $nflbet_spread, $nflbet_amount, $nflbet_win, $proj_score_home, $proj_score_away, $nfl_homeabb, $nfl_awayabb, $nfllines_fav,$nfllines_underdog);
-                    $bet_winloss = $bet_return_result[0];
-                    $bet_winloss_amt = $bet_return_result[1];
-                    $net_winloss += $bet_winloss_amt;
-                    break;
-                case 'O/U':
-                    $bet_return_result = _nfl_ou_live_result($nflbet_for, $nflbet_spread, $nflbet_amount, $nflbet_win, $proj_score_home, $proj_score_away);
-                    $bet_winloss = $bet_return_result[0];
-                    $bet_winloss_amt = $bet_return_result[1];
-                    $net_winloss += $bet_winloss_amt;
-                    break;
-            }
-
-
             foreach ($array_nflbets as $betkey => $value) {
+                $nflbet_type = $array_nflbets[$betkey]['nflbet_type'];
+                $nflbet_for = $array_nflbets[$betkey]['nflbet_for'];
+                $nflbet_spread = $array_nflbets[$betkey]['nflbet_spread'];
+                $nflbet_amount = $array_nflbets[$betkey]['nflbet_amount'];
+                $nflbet_win = $array_nflbets[$betkey]['nflbet_win'];
+
+
+                switch ($nflbet_type) {
+                    case 'SPREAD':
+                        $bet_return_result = _nfl_spread_live_result($nflbet_for, $nflbet_spread, $nflbet_amount, $nflbet_win, $proj_score_home, $proj_score_away, $nfl_homeabb, $nfl_awayabb, $nfllines_fav, $nfllines_underdog);
+                        $bet_winloss = $bet_return_result[0];
+                        $bet_winloss_amt = $bet_return_result[1];
+                        $bet_classcolor = $bet_return_result[2];
+                        $net_winloss += $bet_winloss_amt;
+                        break;
+                    case 'O/U':
+                        $bet_return_result = _nfl_ou_live_result($nflbet_for, $nflbet_spread, $nflbet_amount, $nflbet_win, $proj_score_home, $proj_score_away);
+                        $bet_winloss = $bet_return_result[0];
+                        $bet_winloss_amt = $bet_return_result[1];
+                        $bet_classcolor = $bet_return_result[2];
+                        $net_winloss += $bet_winloss_amt;
+                        break;
+                }
                 ?>
                 <div class="weather-category twt-category">
                     <ul>
@@ -132,28 +132,33 @@ foreach ($array_nflgames as $key => $value) {
                             Spread
                         </li>
                         <li>
-                            <h5><?php echo '$' . $array_nflbets[$betkey]['netwin']; ?></h5>
+                            <h5 class="<?php echo $bet_classcolor ?>"><?php echo '$' . $array_nflbets[$betkey]['netwin']; ?></h5>
                             Net Win
                         </li>
                     </ul>
+
                 </div>
                 <div class="h2"><?php echo $bet_winloss . ' | ' . $bet_winloss_amt ?></div>
-                <?php
-            }
-        } else {
-            ?>
+            <?php
+        }
+    } else {
+        ?>
             <div class="weather-category twt-category">
                 <ul>
                     <li class="active">
-                        <h5><?php echo 'NO BETS?'?> </h5>
+                        <h5><?php echo 'NO BETS?' ?> </h5>
+
                     </li>
 
                 </ul>
+
             </div>
 
-        <?php }
-        ?>
-
+    <?php }
+    ?>
+        <div class="weather-category twt-category">
+            <ul data-id = "<?php echo $gameid ?>" class="click_addbet"><li><h5>Add Bets <i class="fa fa-plus-circle"></i></h5></li></ul>
+        </div>
         <div class="alert-secondary">
             <div class="media">
 
@@ -167,13 +172,26 @@ foreach ($array_nflgames as $key => $value) {
                 </div>
             </div>
         </div>
-        <footer class="twt-footer">
-            <a href="#"><i class="fa fa-camera"></i></a>
-            <a href="#"><i class="fa fa-map-marker"></i></a>
-            New Castle, UK
-            <span class="pull-right">
-                32
-            </span>
+        <footer class="twt-footer nfl_modifyline" data-id = "<?php echo $gameid ?>">
+
+            <!--Display Lines-->
+    <?php
+    $sql_nfl_lines = $conn1->prepare("SELECT 
+                                            nfllines_fav, nfllines_spread, nfllines_ou
+                                        FROM
+                                            betanalyzer.nfl_lines
+                                        WHERE
+                                            nfllines_id = $gameid");
+    $sql_nfl_lines->execute();
+    $array_nfl_lines = $sql_nfl_lines->fetchAll(pdo::FETCH_ASSOC);
+
+    if (!empty($array_nfl_lines)) {
+        echo $array_nfl_lines[0]['nfllines_fav'] . ' -' . $array_nfl_lines[0]['nfllines_spread'] . ' | ' . $array_nfl_lines[0]['nfllines_ou'];
+    } else {
+        echo 'NO LINE';
+    }
+    ?>
+
         </footer>
     </div>
 
