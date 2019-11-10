@@ -26,6 +26,7 @@ $sql_nflgames = $conn1->prepare("SELECT
                                 betanalyzer.nfl t1
                                     LEFT JOIN
                                 betanalyzer.nfl_lines t3 ON t1.nfl_id = t3.nfllines_id
+                                
                             WHERE
                                 t1.nfl_update_datetime = (SELECT 
                                         MAX(t2.nfl_update_datetime)
