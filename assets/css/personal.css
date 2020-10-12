@@ -4,6 +4,50 @@
 }
 
 
-div.weather-category.twt-category > ul > li:last-child {
-      border: none;
+.title-page{
+    clear: both;
+    display: block;
+    font-family: 'Open Sans';
+    font-size: 24px;
+    font-weight: 700;
+    padding: 0 0 15px 0;
+    text-transform: uppercase;
+    width: 100%;
+    border-bottom: 1px solid #8e8e8e;
+    margin: 0 0 15px 0;
 }
+
+.hidden {display:none;}
+
+.input_item{
+    max-width: 100px;
+}
+
+.hiddencostdetail{
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    line-height: 1.42857143;
+    color: #656565;
+    font-size: 13px;
+    font-family: 'Open Sans',"HelveticaNeue","Helvetica Neue",Helvetica,Arial,sans-serif;
+    box-sizing: border-box;
+    border-radius: 0;
+    padding: 30px 0px;
+    display: block;
+}
+
+
+.bottomborder{
+
+    margin-bottom: 1rem;
+    border: 0;
+    border-bottom: 1px solid rgba(0,0,0,.1);
+}
+
+.pointer{
+    cursor: pointer;
+}
+
+/*@media (max-width: 1120 px)
+.menutoggle {
+    display: none;
+}*/

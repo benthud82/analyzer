@@ -19,11 +19,11 @@
     <div id="right-panel" class="right-panel">
         <?php include 'horizontalnav.php'; ?>
         <div class="content mt-3">
-            <div class="card-columns">
+           
                 <div id="ctn_nflgames">
                     <!--nfl game content will go here-->
                 </div>
-            </div>  
+         
         </div>
 
         <div id="modal_nfladdbet" class="modal fade " role="dialog"></div>
@@ -39,7 +39,7 @@
 
 
         function getnflgames() {
-            var nfl_week = 10;
+            var nfl_week = 3;
             $.ajax({
                 data: {"nfl_week": nfl_week},
                 type: 'POST',

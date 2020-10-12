@@ -10,7 +10,7 @@ function _nfl_projscore($nfl_homeabb, $nfl_hs, $nfl_awayabb, $nfl_vs, $nfllines_
         $nfl_quarter = 2;
         $game_time_rem = 30;
         $game_time_elapsed = 30;
-    } elseif ($nfl_quarter == 'F') {
+    } elseif ($nfl_quarter == 'F' || $nfl_quarter == 'Final') {
         $nfl_quarter = 4;
         $game_time_rem = 0;
         $game_time_elapsed = 60;

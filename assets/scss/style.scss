@@ -233,7 +233,7 @@ aside.left-panel {
                     &:before {
                         content: "\f105";
                         color: #c8c9ce;
-                        font-family: 'Fontawesome';
+                        font-family: 'FontAwesome';
                         font-size: 16px;
                         position: absolute;
                         top: 10px;
@@ -301,7 +301,8 @@ aside.left-panel {
     color: #d7d9e3 !important;
 }
 .navbar-nav li span.count {
-    background: #a9d86e;
+    background: #d9534f !important; 
+    background-color:#d9534f !important;
     border-radius: 50%;
     color: #fff;
     font-family: 'Open Sans';
@@ -1822,3 +1823,4 @@ header .form-inline {
         }
     }
 }
+

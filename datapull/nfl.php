@@ -1,12 +1,13 @@
 <?php
 ini_set('display_errors', 1); error_reporting(-1);
 include_once '../globalincludes/connection.php';
-$xmlString = 'http://www.nfl.com/liveupdate/scorestrip/ss.xml';
+#$xmlString = 'http://www.http://www.nfl.com/liveupdate/scorestrip/ss.xml';
+$xmlString = 'http://static.nfl.com/liveupdate/scores/scores.json';
 $xml = simplexml_load_file($xmlString) or die("Error: Cannot create object");
 $json = json_encode($xml);
 $array = json_decode($json, TRUE);
 $push_array = array();
-$week = intval(10);
+$week = intval(1);
 $curtime = date('Y-m-d H:i:s');
 
 $columns = "nfl_id,nfl_update_datetime, nfl_date,nfl_day,nfl_gametime,nfl_quarter,nfl_timerem,nfl_homeabb,nfl_homename,nfl_hs,nfl_awayabb,nfl_awayname,nfl_vs,nfl_p,nfl_rz,nfl_ga,nfl_gametag,nfl_week";
