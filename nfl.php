@@ -39,7 +39,7 @@
 
 
         function getnflgames() {
-            var nfl_week = 3;
+            var nfl_week = 13;
             $.ajax({
                 data: {"nfl_week": nfl_week},
                 type: 'POST',

@@ -7,13 +7,13 @@ $net_winloss = 0;
 $gamelength = 60;
 $sql_nflgames = $conn1->prepare("SELECT 
     t1.nfl_id,
-    t1.nfl_quarter,
-    t1.nfl_timerem,
-    t1.nfl_homeabb,
-    t1.nfl_hs,
-    t1.nfl_awayabb,
-    t1.nfl_vs,
-    t1.nfl_p,
+    t1.quarter,
+    t1.time_remaining_in_game,
+    t1.home_team_short,
+    t1.home_score,
+    t1.away_team_short,
+    t1.away_score,
+    t1.quarter,
     t3.nfllines_fav,
     t3.nfllines_underdog,
     t3.nfllines_spread,
@@ -23,7 +23,7 @@ $sql_nflgames = $conn1->prepare("SELECT
     CAST((t3.nfllines_ou / 2) - (nfllines_spread / 2)
         AS DECIMAL (5 , 1 )) AS score_underdog
 FROM
-    betanalyzer.nfl t1
+    betanalyzer.nfl_scores t1
         LEFT JOIN
     betanalyzer.nfl_lines t3 ON t1.nfl_id = t3.nfllines_id
 WHERE

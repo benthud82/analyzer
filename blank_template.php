@@ -15,142 +15,14 @@
 
 <body>
 
-
     <div id="right-panel" class="right-panel">
         <?php include 'horizontalnav.php'; ?>
         <div class="content mt-3">
 
-            <!--Live shorts datatable-->
-            <div class="row">
-                <div class="col-lg-12 col-md-12">
-                    <div class="card"> 
-                        <div class="card-header">
-                            <h5>Bets</h5>
-                        </div>
-                        <div class="card-body">
-                            <div id="container_bets" class="">
-                                <table id="dt_bets" class="table table-bordered nowrap compact dt_font" cellspacing="0" style="cursor: pointer">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Bookie</th>
-                                            <th>Type</th>
-                                            <th>Bet Amount</th>
-                                            <th>Placed</th>                              
-                                            <th>Pending</th>                            
-                                            <th>Sport</th>                              
-                                            <th>Competition</th>                              
-                                            <th>Odds</th> 
-                                            <th>Event Time</th>  
-                                            <th>Payout</th>                              
-                                            <th>Status</th>                              
-                                            <th>Selection</th>                              
-                                            <th>Line</th>                              
-                                        </tr>
-                                    </thead>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
 
-        <div id="modal_nfladdbet" class="modal fade " role="dialog"></div>
-        <div id="modal_nfladdline" class="modal fade " role="dialog"></div>
 
     </div>
-
-    <script>
-
-        $(document).ready(function () {
-            getbets();
-        });
-
-
-        function getbets() {
-            oTable1 = $('#dt_bets').DataTable({
-                dom: "<'row'<'col-sm-4 pull-left'l><'col-sm-4 text-center'><'col-sm-4 pull-right'f>>" + "<'row'<'col-sm-12'tr>>" + "<'row'<'col-sm-4 pull-left'i><'col-sm-8 pull-right'p>>",
-                destroy: true,
-                "order": [[4, "desc"]],
-                'processing': true,
-                "scrollX": true,
-                'ajax': {
-                    'type': 'POST',
-                    'url': 'globaldata/data_bets.php'
-//                'data': {
-//                    whse: whse
-//                }
-                },
-                fixedHeader: true,
-                buttons: [
-                    'excelHtml5'
-                ],
-//            "columnDefs": [
-//                {className: "", targets: [-1]},
-//                {className: "my_class", targets: "_all"}
-//
-//            ],
-                createdRow: function (row, data, index) {
-                    $(row).addClass('hovercoloer'); //add hover color at the row level
-                    $(row).attr('id', data[0]); // location is the row id.  Location is the second element in the table
-                }
-
-            });
-        }
-
-        $(document).on("click touchstart", ".click_addbet", function (e) {
-            var nfl_id = $(this).attr('data-id');
-            $.ajax({
-                data: {"nfl_id": nfl_id},
-                type: 'POST',
-                url: 'modal/nfl_betmodal.php',
-                dataType: 'html',
-                success: function (ajaxresult) {
-                    $("#modal_nfladdbet").html(ajaxresult);
-                    $('#modal_nfladdbet').modal('toggle');
-                }
-            });
-        });
-
-        $(document).on("click touchstart", ".nfl_modifyline", function (e) {
-            var nfl_id = $(this).attr('data-id');
-            $.ajax({
-                data: {"nfl_id": nfl_id},
-                type: 'POST',
-                url: 'modal/nfl_linemodal.php',
-                dataType: 'html',
-                success: function (ajaxresult) {
-                    $("#modal_nfladdbet").html(ajaxresult);
-                    $('#modal_nfladdbet').modal('toggle');
-                }
-            });
-        });
-
-        //post complete wager to table
-        $(document).on("click touchstart", "#btn_addbet", function (event) {
-            event.preventDefault();
-            var nfl_id = $('#nfl_id').val();
-            var nfl_type = $('#nfl_type').val();
-            var nfl_for = $('#nfl_for').val();
-            var nfl_spread = $('#nfl_spread').val();
-            var nfl_amt = $('#nfl_amt').val();
-            var nfl_winamt = $('#nfl_winamt').val();
-
-            var formData = 'nfl_id=' + nfl_id + '&nfl_type=' + nfl_type + '&nfl_for=' + nfl_for + '&nfl_spread=' + nfl_spread + '&nfl_amt=' + nfl_amt + '&nfl_winamt=' + nfl_winamt;
-            $.ajax({
-                url: 'postdata/nfl_bet.php',
-                type: 'POST',
-                data: formData,
-                success: function (result) {
-                    $('#modal_nfladdbet').modal('hide');
-                    getnflgames();
-                }
-            });
-        });
-
-    </script>
 
 </body>
 </html>

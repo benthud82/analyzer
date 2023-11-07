@@ -20,7 +20,12 @@
         <?php include 'horizontalnav.php'; ?>
         <div class="content mt-3">
 
-            <!--Live shorts datatable-->
+            <div class="row">
+                <div class="col-md-3">
+                    <button id="btn_addwager" type="button" class="btn btn-success"><i class="fa fa-plus-circle"></i>&nbsp; Add New Wager</button>
+                </div>
+            </div>
+            <!--Bets datatable-->
             <div class="row">
                 <div class="col-lg-12 col-md-12">
                     <div class="card"> 
@@ -57,8 +62,8 @@
 
         </div>
 
-        <div id="modal_nfladdbet" class="modal fade " role="dialog"></div>
-        <div id="modal_nfladdline" class="modal fade " role="dialog"></div>
+<?php include 'modal/modal_addwager.php';?>
+
 
     </div>
 
@@ -100,18 +105,9 @@
             });
         }
 
-        $(document).on("click touchstart", ".click_addbet", function (e) {
-            var nfl_id = $(this).attr('data-id');
-            $.ajax({
-                data: {"nfl_id": nfl_id},
-                type: 'POST',
-                url: 'modal/nfl_betmodal.php',
-                dataType: 'html',
-                success: function (ajaxresult) {
-                    $("#modal_nfladdbet").html(ajaxresult);
-                    $('#modal_nfladdbet').modal('toggle');
-                }
-            });
+        //toggle modal_addwager
+        $(document).on("click touchstart", "#btn_addwager", function (e) {
+            $('#modal_addwager').modal('toggle');
         });
 
         $(document).on("click touchstart", ".nfl_modifyline", function (e) {
