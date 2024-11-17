@@ -122,3 +122,26 @@ function _nfl_spread_live_result($nflbet_for, $nflbet_spread, $nflbet_amount, $n
     }
     return $array_bet_result;
 }
+
+
+function projectFinalScore($nfl_timerem, $nfl_hs, $nfl_vs, $nfllines_fav, $nfllines_ou, $nfllines_spread, $nfl_homeabb) {
+    $total_game_time = 60; // Total game time in minutes
+
+    // Calculate the initial projected scores based on over/under and spread
+    $fav_initial_score = ($nfllines_ou / 2) + ($nfllines_spread / 2);
+    $underdog_initial_score = ($nfllines_ou / 2) - ($nfllines_spread / 2);
+
+    // Determine which team is the favorite and which is the underdog
+    $home_is_fav = $nfllines_fav == $nfl_homeabb;
+    $home_initial_score = $home_is_fav ? $fav_initial_score : $underdog_initial_score;
+    $away_initial_score = $home_is_fav ? $underdog_initial_score : $fav_initial_score;
+
+    // Calculate the weight of the initial projection based on time remaining
+    $weight = $nfl_timerem / $total_game_time;
+
+    // Calculate the final projected scores
+    $home_final_score = $weight * $home_initial_score + (1 - $weight) * $nfl_hs;
+    $away_final_score = $weight * $away_initial_score + (1 - $weight) * $nfl_vs;
+
+    return array($home_final_score, $away_final_score);
+}

@@ -19,11 +19,13 @@
     <div id="right-panel" class="right-panel">
         <?php include 'horizontalnav.php'; ?>
         <div class="content mt-3">
-           
-                <div id="ctn_nflgames">
-                    <!--nfl game content will go here-->
-                </div>
-         
+
+            <div id="ctn_nflgames">
+                
+                
+                
+            </div>
+
         </div>
 
         <div id="modal_nfladdbet" class="modal fade " role="dialog"></div>
@@ -54,7 +56,7 @@
         $(document).on("click touchstart", ".click_addbet", function (e) {
             var nfl_id = $(this).attr('data-id');
             $.ajax({
-                data: {"nfl_id": nfl_id}, 
+                data: {"nfl_id": nfl_id},
                 type: 'POST',
                 url: 'modal/nfl_betmodal.php',
                 dataType: 'html',
@@ -68,7 +70,7 @@
         $(document).on("click touchstart", ".nfl_modifyline", function (e) {
             var nfl_id = $(this).attr('data-id');
             $.ajax({
-                data: {"nfl_id": nfl_id}, 
+                data: {"nfl_id": nfl_id},
                 type: 'POST',
                 url: 'modal/nfl_linemodal.php',
                 dataType: 'html',

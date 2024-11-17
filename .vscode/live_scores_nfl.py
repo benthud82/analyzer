@@ -16,8 +16,8 @@ for event in data['events']:
     # Parse the data
     nfl_id = event['id']
     game_datetime = datetime.strptime(event['date'], '%Y-%m-%dT%H:%MZ')
-    game_date = game_datetime.date()
-    game_time = game_datetime.time()
+    game_date = game_datetime.date()  # Coordinated Universal Time (UTC).
+    game_time = game_datetime.time()  # Coordinated Universal Time (UTC).
     home_team = event['competitions'][0]['competitors'][0]['team']['displayName']
     home_team_short = event['competitions'][0]['competitors'][0]['team']['abbreviation']
     away_team = event['competitions'][0]['competitors'][1]['team']['displayName']
