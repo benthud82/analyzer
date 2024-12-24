@@ -14,6 +14,14 @@ $sql_nflgames = $conn1->prepare("SELECT
     away_team_short,
     away_score,
     quarter,
+    openaway,
+    openhome,
+    currentaway,
+    currenthome,
+    cashhome,
+    cashaway,
+    ticketshome,
+    ticketsaway,
     CASE
         WHEN openaway < 0 THEN away_team
         WHEN openhome < 0 THEN home_team
@@ -29,7 +37,6 @@ $sql_nflgames = $conn1->prepare("SELECT
         WHEN currenthome LIKE '%-%' THEN currenthome
         ELSE 'PK'
     END AS nfllines_spread,
-    (cashhome + cashaway) / 2 AS nfllines_ou,
     CAST(((cashhome + cashaway) / 2 + (openaway - openhome) / 2) AS DECIMAL (5 , 1 )) AS score_favorite,
     CAST(((cashhome + cashaway) / 2 - (openaway - openhome) / 2) AS DECIMAL (5 , 1 )) AS score_underdog
 FROM
@@ -41,6 +48,7 @@ FROM
          JOIN
     lineswing.nfl_lines AS nl ON ta1.team_alias = nl.teamhome
         AND ta2.team_alias = nl.teamaway
+WHERE update_time >= DATE_SUB(CURDATE(), INTERVAL 3 DAY)
 ORDER BY 
     CASE 
         WHEN time_remaining_in_game > 0 THEN 0 
@@ -66,29 +74,57 @@ foreach ($array_nflgames as $key => $value) {
     $nfl_awayabb = $array_nflgames[$key]['away_team_short'];  //away team
     $score_favorite = $array_nflgames[$key]['score_favorite'];  //spread projected score favorite
     $score_underdog = $array_nflgames[$key]['score_underdog'];  //spread projected score underdog
-    $nfllines_ou = round($array_nflgames[$key]['nfllines_ou'],0);  //spread over under
+    $openaway = $array_nflgames[$key]['openaway'];
+    $openhome = $array_nflgames[$key]['openhome'];
+    $currentaway = $array_nflgames[$key]['currentaway'];
+    $currenthome = $array_nflgames[$key]['currenthome'];
+    $cashhome = $array_nflgames[$key]['cashhome'];
+    $cashaway = $array_nflgames[$key]['cashaway'];
+    $ticketshome = $array_nflgames[$key]['ticketshome'];
+    $ticketsaway = $array_nflgames[$key]['ticketsaway'];
     //projected score
     $proj_array = projectFinalScore($nfl_timerem, $nfl_hs, $nfl_vs, $nfllines_fav, $nfllines_ou, $nfllines_spread, $nfl_homeabb); 
 //    $proj_array = _nfl_projscore($nfl_homeabb, $nfl_hs, $nfl_awayabb, $nfl_vs, $nfllines_fav, $nfllines_underdog, $nfllines_spread, $nfllines_ou, $score_favorite, $score_underdog, $nfl_quarter, $nfl_timerem, $gamelength);
     $proj_score_home = $proj_array[0];
     $proj_score_away = $proj_array[1];
+
+    // Determine arrow direction and color for current lines
+    $away_arrow = (floatval($currentaway) > floatval($openaway)) ? 'fa-arrow-up text-success' : 'fa-arrow-down text-danger';
+    $home_arrow = (floatval($currenthome) > floatval($openhome)) ? 'fa-arrow-up text-success' : 'fa-arrow-down text-danger';
     ?>
 
-
-
-
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
+        <div class="card mb-3 shadow-sm">
+            <div class="card-header bg-dark text-white">
                 <strong class="card-title">Game: <?php echo $nfl_awayabb . ' at ' . $nfl_homeabb ?></strong>
             </div>
             <div class="card-body">
-                <p>Team Favored: <?php echo $nfllines_fav ?></p>
-                <p>Current LIne: <?php echo $nfllines_spread ?></p>
-                <p>Current Over Under: <?php echo number_format($nfllines_ou, 1) ?></p>
                 <div class="row">
+                    <div class="col-6">
+                        <p><i class="fa fa-star text-warning"></i> <strong>Favored:</strong> <?php echo $nfllines_fav ?></p>
+                        <p><i class="fa fa-arrows-alt-h text-info"></i> <strong>Line:</strong> <?php echo $nfllines_spread ?></p>
+                    </div>
+                    <div class="col-6">
+                        <p><i class="fa fa-money-bill-wave text-primary"></i> <strong>Cash Home:</strong> <?php echo $cashhome ?></p>
+                        <p><i class="fa fa-money-bill-wave text-primary"></i> <strong>Cash Away:</strong> <?php echo $cashaway ?></p>
+                        <p><i class="fa fa-ticket-alt text-secondary"></i> <strong>Tickets Home:</strong> <?php echo $ticketshome ?></p>
+                        <p><i class="fa fa-ticket-alt text-secondary"></i> <strong>Tickets Away:</strong> <?php echo $ticketsaway ?></p>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <p><strong>Open Away:</strong> <?php echo $openaway ?></p>
+                        <p><strong>Open Home:</strong> <?php echo $openhome ?></p>
+                    </div>
+                    <div class="col-6">
+                        <p><i class="fa <?php echo $away_arrow; ?>"></i> <strong>Current Away:</strong> <?php echo $currentaway ?></p>
+                        <p><i class="fa <?php echo $home_arrow; ?>"></i> <strong>Current Home:</strong> <?php echo $currenthome ?></p>
+                    </div>
+                </div>
+                <div class="row mt-3">
                     <div class="col-md-6 col-lg-3">
-                        <div class="card">
+                        <div class="card text-center">
                             <div class="p-0 clearfix">
                                 <i class="fa fa-cogs bg-primary p-4 font-2xl mr-3 float-left text-light"></i>
                                 <div class="h5 text-primary mb-0 pt-3"><?php echo $proj_score_home ?></div>
@@ -97,7 +133,7 @@ foreach ($array_nflgames as $key => $value) {
                         </div>
                     </div>
                     <div class="col-md-6 col-lg-3">
-                        <div class="card">
+                        <div class="card text-center">
                             <div class="p-0 clearfix">
                                 <i class="fa fa-cogs bg-primary p-4 font-2xl mr-3 float-left text-light"></i>
                                 <div class="h5 text-primary mb-0 pt-3"><?php echo $proj_score_away ?></div>
@@ -106,19 +142,9 @@ foreach ($array_nflgames as $key => $value) {
                         </div>
                     </div>
                 </div>
-
-
-
             </div>
         </div>
     </div>
-
-
-
-
-
-
-
 
     <?php
 }

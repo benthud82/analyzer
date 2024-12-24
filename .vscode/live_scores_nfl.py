@@ -1,5 +1,5 @@
 import requests
-import mysql.connector
+import pymysql
 import json
 from datetime import datetime
 
@@ -7,9 +7,14 @@ from datetime import datetime
 response = requests.get('https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard')
 data = response.json()
 
-# Connect to the MySQL database
-cnx = mysql.connector.connect(user='bentley', password='dave41', host='104.154.153.225', database='betanalyzer')
-cursor = cnx.cursor()
+# Connect to the MySQL database using pymysql
+try:
+    cnx = pymysql.connect(user='bentley', password='dave41',
+                          host='104.154.153.225',
+                          database='betanalyzer')
+    cursor = cnx.cursor()
+except pymysql.MySQLError as err:
+    print(f"Error: {err}")
 
 # Loop through each event
 for event in data['events']:

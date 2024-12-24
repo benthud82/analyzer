@@ -1,11 +1,9 @@
 from bs4 import BeautifulSoup
 import time
-import mysql.connector
+import pymysql
 from datetime import datetime
 from collections import OrderedDict
 import re
-import tzlocal
-import pytz
 from playwright.sync_api import sync_playwright
 
 # Keep your existing helper func tions and configurations
@@ -31,6 +29,10 @@ default_fields = OrderedDict([
     ('cashaway', None),
     ('ticketshome', None),
     ('ticketsaway', None),
+    ('cashover', None),
+    ('ticketsover', None),
+    ('overopen', None),
+    ('overcurrent', None),
     ('timepulled', None)
 ])
 
@@ -114,12 +116,33 @@ def extract_spread(odds_text):
         # For positive spreads, get everything up to the first minus sign
         return odds_text.split('-')[0]
 
+def extract_over_under_odds(odds_text):
+    # Convert fractions to decimals
+    odds_text = convert_fraction_to_decimal(odds_text)
+    # Extract the numeric part before any 'o' or 'u'
+    return float(odds_text.split('o')[0].split('u')[0])
+
+def extract_over_under_percentage(text):
+    try:
+        # Convert the percentage to "over" format
+        if text.startswith('o'):
+            return int(text[1:])
+        elif text.startswith('u'):
+            return 100 - int(text[1:])
+    except ValueError:
+        print(f"Error converting percentage: {text}")
+    return 0
+
 def main():
-    # Database connection
-    cnx = mysql.connector.connect(user='bentley', password='dave41',
-                                host='104.154.153.225',
-                                database='lineswing')
-    cursor = cnx.cursor()
+    # Database connection using pymysql
+    try:
+        cnx = pymysql.connect(user='bentley', password='dave41',
+                              host='104.154.153.225',
+                              database='lineswing')
+        cursor = cnx.cursor()
+    except pymysql.MySQLError as err:
+        print(f"Error: {err}")
+        return
 
     # Lists for data processing
     my_odds_list = ['open', 'current']
@@ -167,18 +190,25 @@ def main():
             odds_links = row.find_all('a', class_='pggc-link--odds')
             for link in odds_links:
                 odds_text = link.text.strip()
-                spread = extract_spread(odds_text)
                 
                 if 'pggc-away' in link.get('class', []):
                     if 'openaway' not in row_data:
-                        row_data['openaway'] = spread
+                        row_data['openaway'] = extract_spread(odds_text)
                     else:
-                        row_data['currentaway'] = spread
+                        row_data['currentaway'] = extract_spread(odds_text)
                 elif 'pggc-home' in link.get('class', []):
                     if 'openhome' not in row_data:
-                        row_data['openhome'] = spread
+                        row_data['openhome'] = extract_spread(odds_text)
                     else:
-                        row_data['currenthome'] = spread
+                        row_data['currenthome'] = extract_spread(odds_text)
+
+                # Extract over/under odds
+                if 'Opener' in link.get('class', []):
+                    if 'pggc-home' in link.get('class', []):
+                        row_data['overopen'] = extract_over_under_odds(odds_text)
+                elif 'Current' in link.get('class', []):
+                    if 'pggc-home' in link.get('class', []):
+                        row_data['overcurrent'] = extract_over_under_odds(odds_text)
             
             # Consensus Data (Cash and Tickets)
             consensus_links = row.find_all('a', class_='pggc-link--consensus')
@@ -186,23 +216,24 @@ def main():
                 classes = link.get('class', [])
                 text = link.text.strip().replace('%', '')
                 
-                # Add error handling for non-numeric values
+                # Determine the field based on specific class names
                 try:
-                    value = int(text) if text != '-' else 0  # Convert to 0 if text is '-'
-                    
-                    if 'Cash-Away' in str(classes):
-                        row_data['cashaway'] = value
-                    elif 'Cash-Home' in str(classes):
-                        row_data['cashhome'] = value
-                    elif 'Ticket-Away' in str(classes):
-                        row_data['ticketsaway'] = value
-                    elif 'Ticket-Home' in str(classes):
-                        row_data['ticketshome'] = value
+                    if 'e220957-a1-All-Cash-Away' in str(classes):
+                        row_data['cashaway'] = int(text) if text != '-' else 0
+                    elif 'e220957-a2-All-Cash-Home' in str(classes):
+                        row_data['cashhome'] = int(text) if text != '-' else 0
+                    elif 'e220957-a1-All-Ticket-Away' in str(classes):
+                        row_data['ticketsaway'] = int(text) if text != '-' else 0
+                    elif 'e220957-a2-All-Ticket-Home' in str(classes):
+                        row_data['ticketshome'] = int(text) if text != '-' else 0
+                    elif 'e220957-a2-All-Cash-Home' in str(classes):
+                        row_data['cashover'] = extract_over_under_percentage(text)
+                    elif 'e220957-a2-All-Ticket-Home' in str(classes):
+                        row_data['ticketsover'] = extract_over_under_percentage(text)
                 except ValueError:
-                    # Handle invalid numeric values by setting to 0 or another default value
                     value = 0
             
-            if len(row_data) == 14:
+            if len(row_data) == 18:  # Updated to reflect new fields
                 row_data_ordered = OrderedDict(default_fields)
                 for key in row_data_ordered:
                     if key in row_data:
@@ -212,7 +243,7 @@ def main():
                 columns = ', '.join(row_data_ordered.keys())
                 
                 sql_insert = """INSERT INTO `lineswing`.`nfl_lines` (""" + columns + """) 
-                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                         ON DUPLICATE KEY UPDATE 
                             timedate = VALUES(timedate),
                             timetime = VALUES(timetime),
@@ -228,6 +259,10 @@ def main():
                             cashaway = VALUES(cashaway),
                             ticketshome = VALUES(ticketshome),
                             ticketsaway = VALUES(ticketsaway),
+                            cashover = VALUES(cashover),
+                            ticketsover = VALUES(ticketsover),
+                            overopen = VALUES(overopen),
+                            overcurrent = VALUES(overcurrent),
                             timepulled = VALUES(timepulled);"""
 
                 try:
