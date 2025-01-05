@@ -56,8 +56,8 @@ def get_page_data():
             page.wait_for_timeout(2000)  # Wait for filter to apply
             
             # Select spread betting type and wait for change
-            page.select_option('#pggcFilterBetType', index=1)
-            page.wait_for_timeout(2000)  # Wait for filter to apply
+            # page.select_option('#pggcFilterBetType', index=1)
+            # page.wait_for_timeout(2000)  # Wait for filter to apply
             
             # Wait for games to appear with a more specific selector and longer timeout
             page.wait_for_selector('.pggc-game', state='visible', timeout=15000)
@@ -104,23 +104,36 @@ def convert_fraction_to_decimal(odds_text):
     return odds_text.replace('½', '.5').replace('1/2', '.5')
 
 def extract_spread(odds_text):
-    # First convert any fractions to decimals
+    # Convert fractions to decimals
     odds_text = convert_fraction_to_decimal(odds_text)
     
-    # Extract just the spread portion (before the juice/vig)
-    if odds_text.startswith('-'):
-        # For negative spreads, get everything up to the second minus sign
-        parts = odds_text.split('-')
-        return f"-{parts[1]}"
+    # Check for "pk" and return 0
+    if odds_text.lower() == 'pk':
+        return 0.0
+    
+    # Use regex to extract the first valid float number
+    match = re.search(r'[-+]?\d+(\.\d+)?', odds_text)
+    if match:
+        return float(match.group())
     else:
-        # For positive spreads, get everything up to the first minus sign
-        return odds_text.split('-')[0]
+        print(f"Warning: Could not extract odds from text: {odds_text}")
+        return 0.0  # Return a default value or handle the error as needed
 
 def extract_over_under_odds(odds_text):
     # Convert fractions to decimals
     odds_text = convert_fraction_to_decimal(odds_text)
-    # Extract the numeric part before any 'o' or 'u'
-    return float(odds_text.split('o')[0].split('u')[0])
+    
+    # Check for "pk" and return 0
+    if odds_text.lower() == 'pk':
+        return 0.0
+    
+    # Use regex to extract the first valid float number
+    match = re.search(r'[-+]?\d+(\.\d+)?', odds_text)
+    if match:
+        return float(match.group())
+    else:
+        print(f"Warning: Could not extract odds from text: {odds_text}")
+        return 0.0  # Return a default value or handle the error as needed
 
 def extract_over_under_percentage(text):
     try:
@@ -190,60 +203,98 @@ def main():
             odds_links = row.find_all('a', class_='pggc-link--odds')
             for link in odds_links:
                 odds_text = link.text.strip()
+                spread = extract_spread(odds_text)
                 
-                if 'pggc-away' in link.get('class', []):
-                    if 'openaway' not in row_data:
-                        row_data['openaway'] = extract_spread(odds_text)
-                    else:
-                        row_data['currentaway'] = extract_spread(odds_text)
-                elif 'pggc-home' in link.get('class', []):
-                    if 'openhome' not in row_data:
-                        row_data['openhome'] = extract_spread(odds_text)
-                    else:
-                        row_data['currenthome'] = extract_spread(odds_text)
-
-                # Extract over/under odds
-                if 'Opener' in link.get('class', []):
-                    if 'pggc-home' in link.get('class', []):
-                        row_data['overopen'] = extract_over_under_odds(odds_text)
-                elif 'Current' in link.get('class', []):
-                    if 'pggc-home' in link.get('class', []):
-                        row_data['overcurrent'] = extract_over_under_odds(odds_text)
+                if spread is not None:
+                    classes = link.get('class', [])
+                    # Use any() to check for partial matches in class names
+                    if any('Opener' in cls for cls in classes):
+                        if any('a1c' in cls for cls in classes):
+                            if 'pggc-away' in classes:
+                                row_data['openaway'] = spread
+                                row_data['openhome'] = -spread
+                            elif 'pggc-home' in classes:
+                                row_data['openhome'] = spread
+                                row_data['openaway'] = -spread
+                        elif any('a2c' in cls for cls in classes):
+                            row_data['overopen'] = spread
+                    elif any('Current' in cls for cls in classes):
+                        if any('a1c' in cls for cls in classes):
+                            if 'pggc-away' in classes:
+                                row_data['currentaway'] = spread
+                                row_data['currenthome'] = -spread
+                            elif 'pggc-home' in classes:
+                                row_data['currenthome'] = spread
+                                row_data['currentaway'] = -spread
+                        elif any('a2c' in cls for cls in classes):
+                            row_data['overcurrent'] = spread
             
             # Consensus Data (Cash and Tickets)
             consensus_links = row.find_all('a', class_='pggc-link--consensus')
             for link in consensus_links:
                 classes = link.get('class', [])
                 text = link.text.strip().replace('%', '')
-                
-                # Determine the field based on specific class names
+
+                # Determine the field based on class names and text content
                 try:
-                    if 'e220957-a1-All-Cash-Away' in str(classes):
-                        row_data['cashaway'] = int(text) if text != '-' else 0
-                    elif 'e220957-a2-All-Cash-Home' in str(classes):
-                        row_data['cashhome'] = int(text) if text != '-' else 0
-                    elif 'e220957-a1-All-Ticket-Away' in str(classes):
-                        row_data['ticketsaway'] = int(text) if text != '-' else 0
-                    elif 'e220957-a2-All-Ticket-Home' in str(classes):
-                        row_data['ticketshome'] = int(text) if text != '-' else 0
-                    elif 'e220957-a2-All-Cash-Home' in str(classes):
-                        row_data['cashover'] = extract_over_under_percentage(text)
-                    elif 'e220957-a2-All-Ticket-Home' in str(classes):
-                        row_data['ticketsover'] = extract_over_under_percentage(text)
+                    if 'Cash' in str(classes):
+                        if 'u' in text:
+                            row_data['cashunder'] = int(text[1:])
+                            row_data['cashover'] = 100 - row_data['cashunder']
+                        elif 'o' in text:
+                            row_data['cashover'] = int(text[1:])
+                            row_data['cashunder'] = 100 - row_data['cashover']
+                        if 'Away' in str(classes):
+                            row_data['cashaway'] = int(text) if text != '-' else 0
+                            row_data['cashhome'] = 100 - row_data['cashaway']
+                        elif 'Home' in str(classes):
+                            row_data['cashhome'] = int(text) if text != '-' else 0
+                            row_data['cashaway'] = 100 - row_data['cashhome']
+                    elif 'Ticket' in str(classes):
+                        if 'u' in text:
+                            row_data['ticketsunder'] = int(text[1:])
+                            row_data['ticketsover'] = 100 - row_data['ticketsunder']
+                        elif 'o' in text:
+                            row_data['ticketsover'] = int(text[1:])
+                            row_data['ticketsunder'] = 100 - row_data['ticketsover']
+                        if 'Away' in str(classes):
+                            row_data['ticketsaway'] = int(text) if text != '-' else 0
+                            row_data['ticketshome'] = 100 - row_data['ticketsaway']
+                        elif 'Home' in str(classes):
+                            row_data['ticketshome'] = int(text) if text != '-' else 0
+                            row_data['ticketsaway'] = 100 - row_data['ticketshome']
                 except ValueError:
-                    value = 0
+                    print(f"Error converting percentage: {text}")
             
-            if len(row_data) == 18:  # Updated to reflect new fields
-                row_data_ordered = OrderedDict(default_fields)
-                for key in row_data_ordered:
-                    if key in row_data:
-                        row_data_ordered[key] = row_data[key]
-                
-                row_data_ordered['timepulled'] = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+            if len(row_data) == 20:  # Updated to reflect new fields
+                # Ensure the values are in the correct order and types
+                row_data_ordered = OrderedDict([
+                    ('timedate', row_data.get('timedate')),
+                    ('timetime', row_data.get('timetime')),
+                    ('gamenumberaway', int(row_data.get('gamenumberaway', 0))),
+                    ('gamenumberhome', int(row_data.get('gamenumberhome', 0))),
+                    ('teamaway', row_data.get('teamaway', '')),
+                    ('teamhome', row_data.get('teamhome', '')),
+                    ('openaway', row_data.get('openaway', '')),
+                    ('openhome', row_data.get('openhome', '')),
+                    ('currentaway', row_data.get('currentaway', '')),
+                    ('currenthome', row_data.get('currenthome', '')),
+                    ('cashhome', int(row_data.get('cashhome', 0))),
+                    ('cashaway', int(row_data.get('cashaway', 0))),
+                    ('ticketshome', int(row_data.get('ticketshome', 0))),
+                    ('ticketsaway', int(row_data.get('ticketsaway', 0))),
+                    ('cashover', int(row_data.get('cashover', 0))),
+                    ('ticketsover', int(row_data.get('ticketsover', 0))),
+                    ('overopen', float(row_data.get('overopen', 0.0))),
+                    ('overcurrent', float(row_data.get('overcurrent', 0.0))),
+                    ('timepulled', row_data.get('timepulled'))
+                ])
+
                 columns = ', '.join(row_data_ordered.keys())
-                
-                sql_insert = """INSERT INTO `lineswing`.`nfl_lines` (""" + columns + """) 
-                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                placeholders = ', '.join(['%s'] * len(row_data_ordered))
+
+                sql_insert = f"""INSERT INTO `lineswing`.`nfl_lines` ({columns}) 
+                        VALUES ({placeholders})
                         ON DUPLICATE KEY UPDATE 
                             timedate = VALUES(timedate),
                             timetime = VALUES(timetime),
@@ -270,7 +321,8 @@ def main():
                     cnx.commit()
                 except Exception as e:
                     print(f"Error executing SQL: {e}")
-                    print(cursor.statement)
+                    print("SQL Query:", sql_insert)
+                    print("Values:", list(row_data_ordered.values()))
 
     finally:
         # Clean up
